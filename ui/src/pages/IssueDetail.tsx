@@ -318,6 +318,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { formatIssueActivityAction } from "@/lib/activity-format";
 import { copyTextToClipboard } from "../lib/clipboard";
 import { buildIssuePropertiesPanelKey } from "../lib/issue-properties-panel-key";
@@ -358,6 +359,7 @@ import {
   MoreHorizontal,
   MoreVertical,
   Paperclip,
+  Pencil,
   Plus,
   Repeat,
   SlidersHorizontal,
@@ -3250,6 +3252,9 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
   const { pushToast } = useToastActions();
   const { isMobile } = useSidebar();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [editTaskOpen, setEditTaskOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
   const [copied, setCopied] = useState(false);
   const [mobilePropsOpen, setMobilePropsOpen] = useState(false);
   const [artifactsOpenRequest, setArtifactsOpenRequest] = useState<{
@@ -7760,6 +7765,18 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
                     Show task activity
                   </button>
                 ) : null}
+                <button
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent/50"
+                  onClick={() => {
+                    setEditTitle(issue.title);
+                    setEditDescription(issue.description ?? "");
+                    setEditTaskOpen(true);
+                    setMoreOpen(false);
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit task
+                </button>
                 {streamlinedTaskDetailEnabled ? (
                   <>
                     <button
@@ -8681,6 +8698,43 @@ export function TaskDetailSurface({ conversation, tasksTab }: { tasksTab?: TaskS
               </TabsContent>
             )}
           </Tabs>
+
+          <Dialog open={editTaskOpen} onOpenChange={setEditTaskOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit task</DialogTitle>
+                <DialogDescription>Update the title and description.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  aria-label="Task title"
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value)}
+                />
+                <Textarea
+                  aria-label="Task description"
+                  rows={8}
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setEditTaskOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  disabled={!editTitle.trim() || updateIssue.isPending}
+                  onClick={() => {
+                    void updateIssue
+                      .mutateAsync({ title: editTitle.trim(), description: editDescription })
+                      .then(() => setEditTaskOpen(false));
+                  }}
+                >
+                  Save
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <TaskTreeControlDialog
             open={treeControlOpen}
